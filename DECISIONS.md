@@ -15,7 +15,7 @@ hardcoded in the frontend.
 ## 2. Versioned Configuration
 
 Every published configuration creates a new version. Only one version
-is active at a time; previous versions are retained.
+is active at a time, previous versions are retained.
 
 **Why:** Pricing changes must not overwrite historical business rules.
 
