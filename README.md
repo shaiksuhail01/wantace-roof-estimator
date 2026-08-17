@@ -88,7 +88,7 @@ Example:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/db_name
+MONGO_URI=connection_string
 JWT_SECRET=your_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_password
@@ -274,11 +274,15 @@ wantace-roof-estimator-monorepo/
 ## Deployment
 
 ```text
-Frontend -> Vercel / Netlify
-Backend  -> Render / Railway
+Frontend -> Vercel 
+Backend  -> Render 
 Database -> MongoDB Atlas
 ```
 
-**Public Estimator:** `<LIVE_ESTIMATOR_URL>`
+**Public Estimator:** `https://wantace-roof-estimator-wheat.vercel.app`
 
-**Owner Panel:** `<LIVE_OWNER_PANEL_URL>`
+**Admin Panel:** `https://wantace-roof-estimator-wheat.vercel.app/admin/login`
+
+**Backend API:** `https://wantace-roof-estimator-api.onrender.com`
+
+**Health Check:** `https://wantace-roof-estimator-api.onrender.com/api/health`
