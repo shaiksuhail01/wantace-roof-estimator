@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 
 import connectDB from './config/db.js';
 import configRoutes from './routes/configRoutes.js';
+import estimateRoutes from './routes/estimateRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/config', configRoutes);
+app.use('/api/estimate', estimateRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({
