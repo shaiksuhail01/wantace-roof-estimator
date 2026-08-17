@@ -46,6 +46,7 @@ const ConfigEditor = ({ onPublished }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const loadConfig = async () => {
     try {

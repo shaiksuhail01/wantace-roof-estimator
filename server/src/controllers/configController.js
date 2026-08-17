@@ -1,5 +1,43 @@
 import { Config } from '../models/Config.js';
 
+const CALCULATOR_REQUIRED_QUESTIONS = [
+  'roof_area',
+  'material',
+  'pitch',
+  'layers',
+  'stories',
+];
+
+const validateCalculatorQuestions = (questions) => {
+  if (!Array.isArray(questions)) {
+    throw new Error('Questions must be an array.');
+  }
+
+  for (const key of CALCULATOR_REQUIRED_QUESTIONS) {
+    const question = questions.find(
+      (item) => item.key === key
+    );
+
+    if (!question) {
+      throw new Error(
+        `Required calculator question "${key}" is missing.`
+      );
+    }
+
+    if (!question.active) {
+      throw new Error(
+        `Question "${key}" is required by the pricing calculator and cannot be inactive.`
+      );
+    }
+
+    if (!question.required) {
+      throw new Error(
+        `Question "${key}" is required by the pricing calculator and must remain required.`
+      );
+    }
+  }
+};
+
 export const getPublicConfig = async (req, res) => {
   try {
     const config = await Config.findOne({
@@ -94,6 +132,10 @@ export const updateAdminConfig = async (req, res) => {
       modifiers,
     } = req.body;
 
+    // ----------------------------------------
+    // Basic request validation
+    // ----------------------------------------
+
     if (!business || !questions || !modifiers) {
       return res.status(400).json({
         success: false,
@@ -110,6 +152,16 @@ export const updateAdminConfig = async (req, res) => {
       });
     }
 
+    // ----------------------------------------
+    // Calculator compatibility validation
+    // ----------------------------------------
+
+    validateCalculatorQuestions(questions);
+
+    // ----------------------------------------
+    // Find current active configuration
+    // ----------------------------------------
+
     const currentConfig = await Config.findOne({
       is_active: true,
     }).sort({
@@ -123,6 +175,10 @@ export const updateAdminConfig = async (req, res) => {
       });
     }
 
+    // ----------------------------------------
+    // Determine next configuration version
+    // ----------------------------------------
+
     const latestConfig = await Config.findOne()
       .sort({
         config_version: -1,
@@ -133,6 +189,10 @@ export const updateAdminConfig = async (req, res) => {
     const nextVersion =
       (latestConfig?.config_version || 0) + 1;
 
+    // ----------------------------------------
+    // Create new historical configuration
+    // ----------------------------------------
+
     const newConfig = await Config.create({
       config_version: nextVersion,
       is_active: false,
@@ -140,6 +200,10 @@ export const updateAdminConfig = async (req, res) => {
       questions,
       modifiers,
     });
+
+    // ----------------------------------------
+    // Deactivate previous active configuration
+    // ----------------------------------------
 
     await Config.updateMany(
       {
@@ -153,12 +217,18 @@ export const updateAdminConfig = async (req, res) => {
       }
     );
 
+    // ----------------------------------------
+    // Activate new configuration
+    // ----------------------------------------
+
     newConfig.is_active = true;
+
     await newConfig.save();
 
     return res.status(201).json({
       success: true,
-      message: `Configuration version ${nextVersion} published successfully.`,
+      message:
+        `Configuration version ${nextVersion} published successfully.`,
       data: newConfig,
     });
   } catch (error) {

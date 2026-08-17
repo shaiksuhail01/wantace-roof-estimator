@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef} from 'react';
 
 import { getConfig, createEstimate } from '../services/api';
 const initialForm = {
@@ -19,6 +19,7 @@ const RoofEstimator = () => {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const [result, setResult] = useState(null);
+  const resultRef = useRef(null);
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -147,6 +148,12 @@ const RoofEstimator = () => {
       });
 
       setResult(response.data);
+      setTimeout(() => {
+    resultRef.current?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
+}, 100);
     } catch (err) {
       setError(
         err.message || 'Unable to calculate estimate.'
@@ -204,30 +211,45 @@ const RoofEstimator = () => {
 
         {/* Estimate Result */}
         {result && (
-          <div className="mb-8 rounded-2xl border border-green-200 bg-green-50 p-6">
-            <p className="text-sm font-medium text-green-700">
-              Your estimated roofing range
-            </p>
+  <div
+    ref={resultRef}
+    className="mb-8 scroll-mt-6 rounded-2xl border border-green-200 bg-green-50 p-6 shadow-sm"
+  >
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg text-white">
+        ✓
+      </div>
 
-            <div className="mt-2 text-3xl font-bold text-slate-900">
-              {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: config.business.currency,
-                maximumFractionDigits: 0,
-              }).format(result.estimate_low)}
-              {' – '}
-              {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: config.business.currency,
-                maximumFractionDigits: 0,
-              }).format(result.estimate_high)}
-            </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-green-700">
+          Estimate calculated successfully
+        </p>
 
-            <p className="mt-2 text-sm text-slate-600">
-              Configuration version {result.config_version}
-            </p>
-          </div>
-        )}
+        <p className="mt-1 text-sm text-slate-600">
+          Your estimated roofing range is:
+        </p>
+
+        <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: config.business.currency,
+            maximumFractionDigits: 0,
+          }).format(result.estimate_low)}
+          {' – '}
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: config.business.currency,
+            maximumFractionDigits: 0,
+          }).format(result.estimate_high)}
+        </div>
+
+        <p className="mt-2 text-xs text-slate-500">
+          Based on configuration version {result.config_version}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Error */}
         {error && (
