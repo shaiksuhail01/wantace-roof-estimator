@@ -1,115 +1,115 @@
 # Engineering Decisions
 
-A concise record of the key architectural and product decisions made
-for the Wantace Roof Estimator.
+A concise record of the key assumptions, trade-offs, and decisions made for the Wantace Roof Estimator.
 
 ## 1. Configuration-Driven Pricing
 
-Pricing rules and estimator questions are stored in MongoDB rather than
-hardcoded in the frontend.
+The estimator questions, options, rates, and pricing modifiers are stored in MongoDB instead of being hardcoded in the frontend.
 
-**Why:** Admins can update business rules without code changes and redeployments.
-
----
+This was chosen because the brief requires an owner/admin to change business configuration without changing application code. The backend remains the source of truth for pricing.
 
 ## 2. Versioned Configuration
 
-Every published configuration creates a new version. Only one version
-is active at a time, previous versions are retained.
+Every published configuration creates a new version, with only one version active at a time. Previous versions are retained.
 
-**Why:** Pricing changes must not overwrite historical business rules.
+Each lead stores the `config_version` used to calculate its estimate.
 
----
+This ensures that a historical lead remains traceable to the pricing rules that were active when the estimate was generated.
 
-## 3. Leads Store the Configuration Version
+## 3. Calculation Formula
 
-Each lead stores the `config_version` used to generate its estimate,
-along with the customer's submitted answers and calculated range.
+The estimate is calculated server-side using the active configuration:
 
-**Why:** An old lead must remain traceable to the pricing rules used
-when it was created.
+```text
+Material Cost
+= Roof Area × Material Rate × (1 + Waste Factor)
 
----
+Tear-Off Cost
+= Roof Area × Tear-Off Rate
 
-## 4. Server-Side Calculation
+Subtotal
+= (Material Cost + Tear-Off Cost)
+  × Pitch Multiplier × Stories Multiplier
 
-The estimate is calculated in the backend using the active
-configuration.
+Midpoint Estimate
+= Subtotal + Permit Fee
 
-**Why:** Pricing logic should be trusted and cannot depend solely on
-client-side calculations.
+Low Estimate
+= Midpoint × (1 - Range Spread)
 
----
+High Estimate
+= Midpoint × (1 + Range Spread)
+```
 
-## 5. Centralized Calculator Service
+The calculator is kept in a dedicated backend service so pricing cannot be changed by manipulating frontend calculations.
 
-Pricing logic lives in a dedicated `calculator.js` service rather than
-inside the controller or frontend.
+## 4. Calculator-Required Questions
 
-**Why:** Keeps business logic reusable, testable, and separate from
-HTTP concerns.
-
----
-
-## 6. Calculator-Required Questions
-
-The current calculator requires:
+The calculator currently requires:
 
 `roof_area`, `material`, `pitch`, `layers`, and `stories`.
 
-The backend prevents an admin from publishing a configuration where any
-of these questions is missing, inactive, or optional.
+An administrator cannot publish a configuration that removes or disables a question required by the calculator.
 
-**Why:** Prevents an admin configuration from breaking the pricing
-engine.
+Additional non-pricing questions can be added without changing the calculator.
 
----
+This prevents configuration changes from accidentally breaking the estimation flow.
 
-## 7. Public vs Admin Access
+## 5. Public vs Admin Access
 
-Customers can access the estimator and public configuration without
-authentication. Lead management and configuration management require
-admin authentication.
+Customers do not need an account to use the estimator or submit a lead.
 
-**Why:** Keeps the customer experience frictionless while protecting
-customer data and business controls.
+Configuration management and lead/customer data require authenticated admin access.
 
----
+This keeps the customer experience simple while protecting business configuration and customer information.
 
-## 8. Historical Data Is Preserved
+## 6. Historical Data
 
-Historical leads and configurations are not recalculated or overwritten
-when pricing changes.
+Historical configurations and leads are preserved rather than recalculated when pricing changes.
 
-**Why:** A historical estimate should represent what the customer
-actually received at that time.
+The supplied historical seed data was treated as historical business data, not as expected calculator outputs. Where historical records use older configuration structures, they are preserved rather than rewritten to fit the latest configuration.
 
----
+## 7. What I Deliberately Did Not Build
 
-## 9. Flexible Additional Questions
+Within the 24-hour scope, I did not build:
 
-Admins can add non-pricing questions, such as `gutter_replace`, without
-changing the calculator.
+- Customer accounts
+- Payments
+- CRM integrations
+- AI outbound voice calling
+- Advanced role-based permissions
 
-**Why:** The business can collect additional customer information
-without coupling every question to the pricing formula.
+These were deliberately excluded because they were not necessary to demonstrate the core requirements: configuration management, versioning, estimation, lead capture, historical traceability, and admin security.
 
----
+## 8. Questions I Would Ask Dale
 
-## 10. Backend Validation
+Before a production build, I would clarify:
 
-Important validation is performed on the backend even when the frontend
-also validates the input.
+- Which pricing rules are authoritative if the seed data and business requirements conflict?
+- Which questions are mandatory for every estimate, and which are informational only?
+- Should admins be able to roll back an active configuration?
+- Should historical leads display the exact question/option labels from their original configuration?
+- What customer notification or CRM workflow should happen after lead submission?
+- Are multiple admin roles required, or is one owner/admin role sufficient?
 
-**Why:** Frontend validation improves UX, while backend validation
-protects the application from invalid or manipulated requests.
+## 9. If I Had Another Week
 
----
+I would add:
+
+- Automated API/integration tests
+- Stronger configuration validation
+- Explicit configuration rollback
+- A more complete audit trail
+- Improved error handling and observability
+- Additional production hardening
+
+I would also improve the historical configuration UI so an admin can easily compare versions and inspect exactly what changed.
 
 ## Summary
 
-The system is designed around three principles:
+The implementation prioritizes:
 
-1. **Configuration-driven** — business pricing can change without code changes.
-2. **Versioned and traceable** — every lead remains tied to the rules used for its estimate.
-3. **Secure and server-controlled** — pricing and administrative operations are protected by the backend.
+1. **Configuration-driven business rules**
+2. **Versioning and historical traceability**
+3. **Server-side pricing and validation**
+4. **Secure and simple admin access**
