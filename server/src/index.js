@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 import connectDB from './config/db.js';
+import configRoutes from './routes/configRoutes.js';
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use('/api/config', configRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({
