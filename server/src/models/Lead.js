@@ -9,6 +9,18 @@ const LeadSchema = new mongoose.Schema(
       trim: true,
     },
 
+    captured_at: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+
+    config_version: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
     name: {
       type: String,
       required: true,
@@ -24,17 +36,12 @@ const LeadSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      trim: true,
       lowercase: true,
+      trim: true,
     },
 
     answers: {
       type: mongoose.Schema.Types.Mixed,
-      required: true,
-    },
-
-    config_version: {
-      type: Number,
       required: true,
     },
 
@@ -49,17 +56,10 @@ const LeadSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-
-    captured_at: {
-      type: Date,
-      required: true,
-    },
   },
   {
     timestamps: true,
   }
 );
-
-LeadSchema.index({ captured_at: -1 });
 
 export const Lead = mongoose.model('Lead', LeadSchema);
