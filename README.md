@@ -119,6 +119,20 @@ http://localhost:5000
 
 ### 6. Start Frontend
 
+Create:
+
+```text
+client/.env
+```
+
+Use `client/.env.example` as the template.
+
+Example:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
 Open another terminal:
 
 ```bash
@@ -192,27 +206,6 @@ The backend prevents a configuration from disabling or removing these required c
 
 Additional non-pricing questions can be added without changing the calculator.
 
-## Pricing Formula
-
-```text
-Material Cost
-= Roof Area x Material Rate x (1 + Waste Factor)
-
-Tear-Off Cost
-= Roof Area x Tear-Off Rate
-
-Subtotal
-= (Material Cost + Tear-Off Cost)
-  x Pitch Multiplier x Stories Multiplier
-
-Midpoint
-= Subtotal + Permit Fee
-
-Low / High
-= Midpoint x (1 +/- Range Spread)
-```
-
-Pricing is calculated server-side using the active configuration.
 
 
 ## Testing
